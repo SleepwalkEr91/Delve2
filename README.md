@@ -38,9 +38,9 @@ Each chest category can be individually shown or hidden:
 
 ### 🏆 Fossil Tier Icons
 Fossils are automatically sorted into three tiers based on value, each with a distinct icon:
-- **T1** — Fractured, Hollow, Lucent, Perfect, Pristine, Sanctified, Shuddering
-- **T2** — Aetheric, Bound, Dense, Enchanted, Faceted, Glyphic, Metallic, Prismatic, Tangled
-- **T3** — Aberrant, Bloodstained, Corroded, Frigid, Gilded, Jagged, Primitive, Scorched, Serrated, Turbulent
+- **T1** — Hollow, Fractured, Faceted, Glyphic, Sanctified, Shuddering, Corroded
+- **T2** — Dense, Deft, Aetheric, Pristine, Bloodstained, Bound, Jagged, Metallic, Fundamental
+- **T3** — Gilded, Serrated, Aberrant, Frigid, Scorched, Prismatic, Tangled, Lucent, Opulent
 
 ---
 

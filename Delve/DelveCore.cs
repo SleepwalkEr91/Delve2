@@ -224,19 +224,53 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 
 	public LargeMapData LargeMapInformation { get; set; }
 
+	private string SourceDir;
+
+	private AtlasTexturesProcessor _delveAtlas;
+
+	private string ResolveSourceDirectory()
+	{
+		var sourceDir = Path.Combine(base.PluginManager.SourcePluginDirectoryPath, base.DirectoryName);
+		if (Directory.Exists(Path.Combine(sourceDir, "Textures")))
+		{
+			return sourceDir;
+		}
+		if (Directory.Exists(Path.Combine(base.DirectoryFullName, "Textures")) || Directory.Exists(Path.Combine(base.DirectoryFullName, "textures")))
+		{
+			return base.DirectoryFullName;
+		}
+		return sourceDir;
+	}
+
+	private AtlasTexture GetDelveAtlasTexture(string textureName)
+	{
+		return _delveAtlas?.GetTextureByName(textureName);
+	}
+
 	public override bool Initialise()
 	{
+		SourceDir = ResolveSourceDirectory();
+		var atlasJsonPath = Path.Combine(SourceDir, "Textures", "DelveAtlas.json");
+		var atlasPngPath = Path.Combine(SourceDir, "Textures", "DelveAtlas.png");
+		if (File.Exists(atlasJsonPath) && File.Exists(atlasPngPath))
+		{
+			_delveAtlas = base.CreateAtlas(atlasJsonPath, atlasPngPath);
+		}
+		else
+		{
+			base.LogError($"Delve atlas not found at: {atlasJsonPath}", 10f);
+		}
 		AtlasTextureInit();
 		Input.RegisterKey(base.Settings.DebugHotkey.Value);
-		iconStore = new IconStore(base.CreateAtlas(Path.Join(base.DirectoryFullName, "textures", "chart", "icons.json"), Path.Join(base.DirectoryFullName, "textures", "chart", "icons.png")), Path.Join(base.DirectoryFullName, "chart_icons.json"));
+		iconStore = new IconStore(base.CreateAtlas(Path.Join(SourceDir, "Textures", "chart", "icons.json"), Path.Join(SourceDir, "Textures", "chart", "icons.png")), Path.Join(SourceDir, "chart_icons.json"));
 		buildDate = new DateTime(2000, 1, 1).AddDays(version.Build).AddSeconds(version.Revision * 2);
 		base.Name = "Delve";
 		PluginVersion = $"{version}";
 		DelveEntities = new List<DelveEntity>();
 		base.GameController.Area.OnAreaChange += ((BaseSettingsPlugin<DelveSettings>)this).AreaChange;
-		if (File.Exists(base.DirectoryFullName + "\\Fossil_Tiers.json"))
+		if (File.Exists(SourceDir + "\\Fossil_Tiers.json"))
 		{
-			string text = File.ReadAllText(base.DirectoryFullName + "\\Fossil_Tiers.json");
+			string text = File.ReadAllText(SourceDir + "\\Fossil_Tiers.json");
 			FossilList = JsonConvert.DeserializeObject<FossilTiers>(text, JsonSettings);
 		}
 		else
@@ -260,7 +294,7 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 		base.Graphics.DrawBox(DrawRect, Color.Black);
 		RectangleF drawRect = DrawRect;
 		drawRect.Width = drawRect.Height;
-		base.Graphics.DrawImage(Path.Combine(base.DirectoryFullName, icon), drawRect);
+		base.Graphics.DrawImage(Path.Combine(SourceDir, icon), drawRect);
 		base.Graphics.DrawFrame(DrawRect, Color.Gray, 2);
 		SharpDX.Vector2 topLeft = DrawRect.TopLeft;
 		topLeft.Y += DrawRect.Height / 2f;
@@ -517,20 +551,30 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 
 	private void RenderMapImages()
 	{
+		if (base.GameController?.Player == null)
+		{
+			return;
+		}
+
 		if (base.GameController.Game.IngameState.IngameUi.Map.LargeMap.IsVisible)
 		{
-			LargeMapInformation = new LargeMapData(base.GameController);
+			try
 			{
-				foreach (DelveEntity delveEntity in DelveEntities)
-				{
-					if (delveEntity != null)
-					{
-						DrawToLargeMiniMap(delveEntity);
-					}
-				}
-				DrawRadarLinesToLargeMiniMap();
+				LargeMapInformation = new LargeMapData(base.GameController);
+			}
+			catch (NullReferenceException)
+			{
 				return;
 			}
+			foreach (DelveEntity delveEntity in DelveEntities)
+			{
+				if (delveEntity != null)
+				{
+					DrawToLargeMiniMap(delveEntity);
+				}
+			}
+			DrawRadarLinesToLargeMiniMap();
+			return;
 		}
 		if (!base.GameController.Game.IngameState.IngameUi.Map.SmallMiniMap.IsVisible)
 		{
@@ -817,64 +861,64 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 
 	public void AtlasTextureInit()
 	{
-		_iconAbberantFossil = base.GetAtlasTexture("AbberantFossil");
-		_iconAbberantFossilT1 = base.GetAtlasTexture("AbberantFossilT1");
-		_iconAbberantFossilT2 = base.GetAtlasTexture("AbberantFossilT2");
-		_iconAbberantFossilT3 = base.GetAtlasTexture("AbberantFossilT3");
-		_iconAbyssChest = base.GetAtlasTexture("AbyssChest");
-		_iconAbyssCrack = base.GetAtlasTexture("AbyssCrack");
-		_iconAbyssJewelChest = base.GetAtlasTexture("AbyssJewelChest");
-		_iconAdditionalSockets = base.GetAtlasTexture("AdditionalSockets");
-		_iconAmbushInvasionChest = base.GetAtlasTexture("AmbushInvasionChest");
-		_iconAzurite = base.GetAtlasTexture("Azurite");
-		_iconAzuriteT1 = base.GetAtlasTexture("AzuriteT1");
-		_iconAzuriteT2 = base.GetAtlasTexture("AzuriteT2");
-		_iconAzuriteT3 = base.GetAtlasTexture("AzuriteT3");
-		_iconBestiaryChest = base.GetAtlasTexture("BestiaryChest");
-		_iconBeyondChest = base.GetAtlasTexture("BeyondChest");
-		_iconBloodlinesChest = base.GetAtlasTexture("BloodlinesChest");
-		_iconBombs = base.GetAtlasTexture("Bombs");
-		_iconBreachChest = base.GetAtlasTexture("BreachChest");
-		_iconCorrupted = base.GetAtlasTexture("Corrupted");
-		_iconCurrency = base.GetAtlasTexture("Currency");
-		_iconDelveChest = base.GetAtlasTexture("DelveChest");
-		_iconDivinationCard = base.GetAtlasTexture("DivinationCard");
-		_iconDominationChest = base.GetAtlasTexture("DominationChest");
-		_iconEnchant = base.GetAtlasTexture("Enchant");
-		_iconEssence = base.GetAtlasTexture("Essence");
-		_iconFlare = base.GetAtlasTexture("Flare");
-		_iconFragment = base.GetAtlasTexture("Fragment");
-		_iconGate = base.GetAtlasTexture("Gate");
-		_iconHarbingerChest = base.GetAtlasTexture("HarbingerChest");
-		_iconHiddenDoor = base.GetAtlasTexture("HiddenDoor");
-		_iconHighLevelGem = base.GetAtlasTexture("HighLevelGem");
-		_iconIncursionChest = base.GetAtlasTexture("IncursionChest");
-		_iconMap = base.GetAtlasTexture("Map");
-		_iconNemesisChest = base.GetAtlasTexture("NemesisChest");
-		_iconOfferingChest = base.GetAtlasTexture("OfferingChest");
-		_iconOnslaughtChest = base.GetAtlasTexture("OnslaughtChest");
-		_iconPaleCourtComplete = base.GetAtlasTexture("PaleCourtComplete");
-		_iconPerandusChest = base.GetAtlasTexture("PerandusChest");
-		_iconPerandusCoins = base.GetAtlasTexture("PerandusCoins");
-		_iconProphecy = base.GetAtlasTexture("Prophecy");
-		_iconRampageChest = base.GetAtlasTexture("RampageChest");
-		_iconRareAmulet = base.GetAtlasTexture("RareAmulet");
-		_iconResonatorT1 = base.GetAtlasTexture("ResonatorT1");
-		_iconResonatorT2 = base.GetAtlasTexture("ResonatorT2");
-		_iconResonatorT3 = base.GetAtlasTexture("ResonatorT3");
-		_iconSilverCoin = base.GetAtlasTexture("SilverCoin");
-		_iconSixLink = base.GetAtlasTexture("SixLink");
-		_iconSpeedArmour = base.GetAtlasTexture("SpeedArmour");
-		_iconStrongbox = base.GetAtlasTexture("Strongbox.png");
-		_iconStygianViseChest = base.GetAtlasTexture("StygianViseChest");
-		_iconTalismanChest = base.GetAtlasTexture("TalismanChest");
-		_iconTempestChest = base.GetAtlasTexture("TempestChest");
-		_iconTormentChest = base.GetAtlasTexture("TormentChest");
-		_iconUniqueManaFlask = base.GetAtlasTexture("UniqueManaFlask");
-		_iconUpgrade2x1A = base.GetAtlasTexture("Upgrade2x1A");
-		_iconUpgrade2x2A = base.GetAtlasTexture("Upgrade2x2A");
-		_iconWarbandsChest = base.GetAtlasTexture("WarbandsChest");
-		_iconWisdomCurrency = base.GetAtlasTexture("WisdomCurrency");
+		_iconAbberantFossil = GetDelveAtlasTexture("AbberantFossil");
+		_iconAbberantFossilT1 = GetDelveAtlasTexture("AbberantFossilT1");
+		_iconAbberantFossilT2 = GetDelveAtlasTexture("AbberantFossilT2");
+		_iconAbberantFossilT3 = GetDelveAtlasTexture("AbberantFossilT3");
+		_iconAbyssChest = GetDelveAtlasTexture("AbyssChest");
+		_iconAbyssCrack = GetDelveAtlasTexture("AbyssCrack");
+		_iconAbyssJewelChest = GetDelveAtlasTexture("AbyssJewelChest");
+		_iconAdditionalSockets = GetDelveAtlasTexture("AdditionalSockets");
+		_iconAmbushInvasionChest = GetDelveAtlasTexture("AmbushInvasionChest");
+		_iconAzurite = GetDelveAtlasTexture("Azurite");
+		_iconAzuriteT1 = GetDelveAtlasTexture("AzuriteT1");
+		_iconAzuriteT2 = GetDelveAtlasTexture("AzuriteT2");
+		_iconAzuriteT3 = GetDelveAtlasTexture("AzuriteT3");
+		_iconBestiaryChest = GetDelveAtlasTexture("BestiaryChest");
+		_iconBeyondChest = GetDelveAtlasTexture("BeyondChest");
+		_iconBloodlinesChest = GetDelveAtlasTexture("BloodlinesChest");
+		_iconBombs = GetDelveAtlasTexture("Bombs");
+		_iconBreachChest = GetDelveAtlasTexture("BreachChest");
+		_iconCorrupted = GetDelveAtlasTexture("Corrupted");
+		_iconCurrency = GetDelveAtlasTexture("Currency");
+		_iconDelveChest = GetDelveAtlasTexture("DelveChest");
+		_iconDivinationCard = GetDelveAtlasTexture("DivinationCard");
+		_iconDominationChest = GetDelveAtlasTexture("DominationChest");
+		_iconEnchant = GetDelveAtlasTexture("Enchant");
+		_iconEssence = GetDelveAtlasTexture("Essence");
+		_iconFlare = GetDelveAtlasTexture("Flare");
+		_iconFragment = GetDelveAtlasTexture("Fragment");
+		_iconGate = GetDelveAtlasTexture("Gate");
+		_iconHarbingerChest = GetDelveAtlasTexture("HarbingerChest");
+		_iconHiddenDoor = GetDelveAtlasTexture("HiddenDoor");
+		_iconHighLevelGem = GetDelveAtlasTexture("HighLevelGem");
+		_iconIncursionChest = GetDelveAtlasTexture("IncursionChest");
+		_iconMap = GetDelveAtlasTexture("Map");
+		_iconNemesisChest = GetDelveAtlasTexture("NemesisChest");
+		_iconOfferingChest = GetDelveAtlasTexture("OfferingChest");
+		_iconOnslaughtChest = GetDelveAtlasTexture("OnslaughtChest");
+		_iconPaleCourtComplete = GetDelveAtlasTexture("PaleCourtComplete");
+		_iconPerandusChest = GetDelveAtlasTexture("PerandusChest");
+		_iconPerandusCoins = GetDelveAtlasTexture("PerandusCoins");
+		_iconProphecy = GetDelveAtlasTexture("Prophecy");
+		_iconRampageChest = GetDelveAtlasTexture("RampageChest");
+		_iconRareAmulet = GetDelveAtlasTexture("RareAmulet");
+		_iconResonatorT1 = GetDelveAtlasTexture("ResonatorT1");
+		_iconResonatorT2 = GetDelveAtlasTexture("ResonatorT2");
+		_iconResonatorT3 = GetDelveAtlasTexture("ResonatorT3");
+		_iconSilverCoin = GetDelveAtlasTexture("SilverCoin");
+		_iconSixLink = GetDelveAtlasTexture("SixLink");
+		_iconSpeedArmour = GetDelveAtlasTexture("SpeedArmour");
+		_iconStrongbox = GetDelveAtlasTexture("Strongbox");
+		_iconStygianViseChest = GetDelveAtlasTexture("StygianViseChest");
+		_iconTalismanChest = GetDelveAtlasTexture("TalismanChest");
+		_iconTempestChest = GetDelveAtlasTexture("TempestChest");
+		_iconTormentChest = GetDelveAtlasTexture("TormentChest");
+		_iconUniqueManaFlask = GetDelveAtlasTexture("UniqueManaFlask");
+		_iconUpgrade2x1A = GetDelveAtlasTexture("Upgrade2x1A");
+		_iconUpgrade2x2A = GetDelveAtlasTexture("Upgrade2x2A");
+		_iconWarbandsChest = GetDelveAtlasTexture("WarbandsChest");
+		_iconWisdomCurrency = GetDelveAtlasTexture("WisdomCurrency");
 	}
 
 	private MapIcon GetMapIcon(DelveEntity e)
