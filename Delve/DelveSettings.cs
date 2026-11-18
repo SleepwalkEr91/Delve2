@@ -63,21 +63,9 @@ public class DelveSettings : ISettings
 
 	public ColorNode DelvePathwayChestColor { get; set; } = (Color)(new ColorBGRA(0, 131, 0, byte.MaxValue));
 
-	public ToggleNode DelveMineMapConnections { get; set; } = new ToggleNode(true);
-
-	public RangeNode<int> ShowRadiusPercentage { get; set; } = new RangeNode<int>(80, 0, 100);
-
 	public ToggleNode DebugMode { get; set; } = new ToggleNode(false);
 
 	public ToggleNode ShouldHideOnOpen { get; set; } = new ToggleNode(false);
-
-	public ToggleNode DrawPaths { get; set; } = new ToggleNode(true);
-
-	public ToggleNode ColoredPaths { get; set; } = new ToggleNode(true);
-
-	public ToggleNode OnlyShowHiddenPaths { get; set; } = new ToggleNode(false);
-
-	public ToggleNode DrawStraightPaths { get; set; } = new ToggleNode(true);
 
 	public HotkeyNode DebugHotkey { get; set; } = new HotkeyNode(Keys.Menu);
 
