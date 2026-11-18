@@ -148,7 +148,6 @@ public class ImGuiExtension
 			if (Input.GetKeyState(Keys.Escape))
 			{
 				ImGui.CloseCurrentPopup();
-				ImGui.EndPopup();
 			}
 			else
 			{

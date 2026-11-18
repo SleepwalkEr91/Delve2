@@ -67,7 +67,7 @@ public class DelveSettings : ISettings
 
 	public ToggleNode ShouldHideOnOpen { get; set; } = new ToggleNode(false);
 
-	public HotkeyNode DebugHotkey { get; set; } = new HotkeyNode(Keys.Menu);
+	public HotkeyNode DebugHotkey { get; set; } = new HotkeyNode(Keys.None);
 
 	public ToggleNode DelveGridMap { get; set; } = new ToggleNode(true);
 
@@ -78,4 +78,10 @@ public class DelveSettings : ISettings
 	// Minimap: radar lines from player to chest entities
 	public ToggleNode MinimapRadarLines { get; set; } = new ToggleNode(true);
 	public RangeNode<int> MinimapRadarLineWidth { get; set; } = new RangeNode<int>(2, 1, 8);
+
+	// Direction arrows at the player pointing to nearby breakable walls
+	public ToggleNode WallArrows { get; set; } = new ToggleNode(true);
+	public RangeNode<int> WallArrowMaxRange { get; set; } = new RangeNode<int>(300, 50, 1000);
+	public RangeNode<int> WallArrowAlertRange { get; set; } = new RangeNode<int>(75, 10, 300);
+	public RangeNode<int> WallArrowSize { get; set; } = new RangeNode<int>(40, 20, 100);
 }

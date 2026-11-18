@@ -94,6 +94,10 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 
 	private float updateCooldown = 250f;
 
+	private System.Windows.Forms.Keys _registeredDebugHotkey = System.Windows.Forms.Keys.None;
+
+	private readonly HashSet<uint> _brokenWalls = new HashSet<uint>();
+
 	public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
 	{
 		MetadataPropertyHandling = (MetadataPropertyHandling)2,
@@ -259,7 +263,7 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 			base.LogError($"Delve atlas not found at: {atlasJsonPath}", 10f);
 		}
 		AtlasTextureInit();
-		Input.RegisterKey(base.Settings.DebugHotkey.Value);
+		base.Graphics.InitImage("directions.png");
 		buildDate = new DateTime(2000, 1, 1).AddDays(version.Build).AddSeconds(version.Revision * 2);
 		base.Name = "Delve";
 		PluginVersion = $"{version}";
@@ -281,6 +285,7 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 	{
 		base.AreaChange(area);
 		DelveEntities = new List<DelveEntity>();
+		_brokenWalls.Clear();
 		IsAzuriteMine = base.GameController.Area.CurrentArea.Name.Contains("Azurite Mine");
 	}
 
@@ -330,10 +335,8 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 			CurrentDelveMapZoom = ((Element)delveWindow).Children[0].Children[0].Children[2].Scale;
 		}
 		catch { }
-		if (base.Settings.DebugHotkey.PressedOnce())
-		{
-			base.Settings.DebugMode.Value = !base.Settings.DebugMode.Value;
-		}
+		DrawWallArrows(delveWindow);
+		UpdateDebugHotkey();
 		if (!base.Settings.DebugMode.Value)
 		{
 			return;
@@ -352,6 +355,74 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 					base.Graphics.DrawText(text, vector2, Color.Black, 20, (FontAlign)1);
 				}
 			}
+		}
+	}
+
+	private void UpdateDebugHotkey()
+	{
+		System.Windows.Forms.Keys hotkey = base.Settings.DebugHotkey.Value;
+		if (hotkey == System.Windows.Forms.Keys.None)
+		{
+			return;
+		}
+		// The hotkey can be changed at runtime, so register it whenever it changes.
+		if (hotkey != _registeredDebugHotkey)
+		{
+			Input.RegisterKey(hotkey);
+			_registeredDebugHotkey = hotkey;
+		}
+		if (base.Settings.DebugHotkey.PressedOnce())
+		{
+			base.Settings.DebugMode.Value = !base.Settings.DebugMode.Value;
+		}
+	}
+
+	private void DrawWallArrows(SubterraneanChart delveWindow)
+	{
+		if (!base.Settings.WallArrows.Value || ((Element)delveWindow).IsVisible)
+		{
+			return;
+		}
+		IngameUIElements ingameUi = base.GameController.IngameState.IngameUi;
+		if (ingameUi.InventoryPanel.IsVisible || ingameUi.StashElement.IsVisible || ingameUi.OpenLeftPanel.IsVisible || ingameUi.OpenRightPanel.IsVisible)
+		{
+			return;
+		}
+		Entity player = base.GameController.Player;
+		if (player == null)
+		{
+			return;
+		}
+		System.Numerics.Vector2 playerScreen = base.GameController.Game.IngameState.Camera.WorldToScreen(player.PosNum);
+		float size = base.Settings.WallArrowSize.Value;
+		RectangleF arrowRect = new RectangleF(playerScreen.X - size / 2f, playerScreen.Y - size, size, size);
+		System.Numerics.Vector2 playerGridPos = player.GridPosNum;
+		foreach (DelveEntity entity in DelveEntities)
+		{
+			if (entity == null || !entity.Path.StartsWith("Metadata/Terrain/Leagues/Delve/Objects/DelveWall"))
+			{
+				continue;
+			}
+			// Remember broken walls, IsAlive can report true again when the entity comes back into range.
+			if (!entity.IsAlive)
+			{
+				_brokenWalls.Add(entity.Id);
+				continue;
+			}
+			if (_brokenWalls.Contains(entity.Id))
+			{
+				continue;
+			}
+			System.Numerics.Vector2 delta = new System.Numerics.Vector2(entity.GridPos.X - playerGridPos.X, entity.GridPos.Y - playerGridPos.Y);
+			double distance = delta.GetPolarCoordinates(out var phi);
+			if (distance > base.Settings.WallArrowMaxRange.Value)
+			{
+				continue;
+			}
+			bool isFractured = entity.Path.Contains("Fractured");
+			bool isClose = distance <= base.Settings.WallArrowAlertRange.Value;
+			Color color = (isFractured ? (isClose ? Color.Red : Color.Orange) : (isClose ? Color.Yellow : Color.LightGreen));
+			base.Graphics.DrawImage("directions.png", arrowRect, MathHepler.GetDirectionsUV(phi, distance), color);
 		}
 	}
 
@@ -685,7 +756,20 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 			idPop++;
 			ImGui.TreePop();
 		}
-	if (ImGui.TreeNode("Delve Map Grid"))
+		if (ImGui.TreeNode("Wall Direction Arrows"))
+		{
+			base.Settings.WallArrows.Value = ImGuiExtension.Checkbox($"Show Arrows to Breakable Walls##{idPop}", base.Settings.WallArrows.Value);
+			idPop++;
+			base.Settings.WallArrowMaxRange.Value = ImGuiExtension.IntSlider($"Max Range##{idPop}", base.Settings.WallArrowMaxRange);
+			idPop++;
+			base.Settings.WallArrowAlertRange.Value = ImGuiExtension.IntSlider($"Close Range (highlight)##{idPop}", base.Settings.WallArrowAlertRange);
+			idPop++;
+			base.Settings.WallArrowSize.Value = ImGuiExtension.IntSlider($"Arrow Size##{idPop}", base.Settings.WallArrowSize);
+			idPop++;
+			ImGui.TextDisabled("Loot walls: orange, red when close. Other walls: green, yellow when close.");
+			ImGui.TreePop();
+		}
+		if (ImGui.TreeNode("Delve Map Grid"))
 		{
 			ImGui.PushID(idPop);
 			base.Settings.DelveGridMap.Value = ImGuiExtension.Checkbox(base.Settings.DelveGridMap.Value ? "Show" : "Hidden", base.Settings.DelveGridMap.Value);
@@ -703,7 +787,12 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 		if (ImGui.TreeNode("Debug Mode"))
 		{
 			ImGui.PushID(idPop);
-			base.Settings.DebugHotkey.Value = ImGuiExtension.HotkeySelector("Debug Mode Hotkey", base.Settings.DebugHotkey.Value);
+			base.Settings.DebugHotkey.Value = ImGuiExtension.HotkeySelector("Debug Mode Hotkey", "Debug Mode Hotkey##popup", base.Settings.DebugHotkey.Value);
+			ImGui.SameLine();
+			if (ImGui.Button("Clear"))
+			{
+				base.Settings.DebugHotkey.Value = System.Windows.Forms.Keys.None;
+			}
 			ImGui.PopID();
 			idPop++;
 			base.Settings.DebugMode.Value = ImGuiExtension.Checkbox($"Debug Mode##{idPop}", base.Settings.DebugMode.Value);
