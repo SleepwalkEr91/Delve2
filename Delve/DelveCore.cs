@@ -848,13 +848,13 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 		ImGui.BulletText(base.Name + ": v" + PluginVersion);
 		ImGui.BulletText($"Last Updated: {buildDate}");
 		idPop = 1;
-		ImGuiTreeNodeFlags val = (ImGuiTreeNodeFlags)26;
+		ImGuiTreeNodeFlags val = ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.NoTreePushOnOpen | ImGuiTreeNodeFlags.NoAutoOpenOnLog;
 		ImGui.PushID(1000);
 		if (ImGui.TreeNodeEx("Settings", val))
 		{
+			// NoTreePushOnOpen: the node does not push onto the ID stack, so no TreePop() here.
 			DelveMenu(idPop, out var num);
 			idPop = num;
-			ImGui.TreePop();
 		}
 		ImGui.PopID();
 	}
