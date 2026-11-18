@@ -6,7 +6,7 @@ using System.Text;
 using System.Windows.Forms;
 using ExileCore;
 using ExileCore.Shared.Nodes;
-using ImGuiNET;
+using Hexa.NET.ImGui;
 using SharpDX;
 
 namespace CoPilot;
@@ -259,33 +259,29 @@ public class ImGuiExtension
 
 	public static string InputText(string label, string currentValue, uint maxLength, ImGuiInputTextFlags flags)
 	{
-		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
-		byte[] array = new byte[maxLength];
-		if (!string.IsNullOrEmpty(currentValue))
-		{
-			byte[] bytes = Encoding.UTF8.GetBytes(currentValue);
-			Array.Copy(bytes, array, bytes.Length);
-		}
-		ImGui.InputText(label, array, maxLength, flags);
-		return Encoding.Default.GetString(array).TrimEnd('\0');
+		string value = currentValue ?? string.Empty;
+		ImGui.InputText(label, ref value, maxLength, flags);
+		return value;
 	}
 
 	public static System.Numerics.Vector4 ImColor_HSV(float h, float s, float v)
 	{
-		ImGui.ColorConvertHSVtoRGB(h, s, v, out float x, out float y, out float z);
+		float x = 0f, y = 0f, z = 0f;
+		ImGui.ColorConvertHSVtoRGB(h, s, v, ref x, ref y, ref z);
 		return new System.Numerics.Vector4(x, y, z, 255f);
 	}
 
 	public static System.Numerics.Vector4 ImColor_HSV(float h, float s, float v, float a)
 	{
-		ImGui.ColorConvertHSVtoRGB(h, s, v, out float x, out float y, out float z);
+		float x = 0f, y = 0f, z = 0f;
+		ImGui.ColorConvertHSVtoRGB(h, s, v, ref x, ref y, ref z);
 		return new System.Numerics.Vector4(x, y, z, a);
 	}
 
 	public static void ImGuiExtension_ColorTabs(string idString, int height, IReadOnlyList<string> settingList, ref int selectedItem, ref int uniqueIdPop)
 	{
 		System.Numerics.Vector2 vector = new System.Numerics.Vector2(ImGui.GetContentRegionAvail().X, height);
-		if (ImGui.BeginChild(idString, vector, ImGuiChildFlags.Border, (ImGuiWindowFlags)2048))
+		if (ImGui.BeginChild(idString, vector, ImGuiChildFlags.Borders, (ImGuiWindowFlags)2048))
 		{
 			for (int i = 0; i < settingList.Count; i++)
 			{
@@ -316,7 +312,7 @@ public class ImGuiExtension
 	public static bool BeginChild(string id, bool border, ImGuiWindowFlags flags)
 	{
 		System.Numerics.Vector2 vector = ImGui.GetContentRegionAvail();
-		return ImGui.BeginChild(id, new System.Numerics.Vector2(vector.X, vector.Y), border ? ImGuiChildFlags.Border : ImGuiChildFlags.None, flags);
+		return ImGui.BeginChild(id, new System.Numerics.Vector2(vector.X, vector.Y), border ? ImGuiChildFlags.Borders : ImGuiChildFlags.None, flags);
 	}
 
 	public static void Spacing(int amount)

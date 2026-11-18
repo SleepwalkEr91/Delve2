@@ -17,7 +17,7 @@ using ExileCore.Shared.AtlasHelper;
 using ExileCore.Shared.Enums;
 using ExileCore.Shared.Helpers;
 using ExileCore.Shared.Nodes;
-using ImGuiNET;
+using Hexa.NET.ImGui;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using SharpDX;
