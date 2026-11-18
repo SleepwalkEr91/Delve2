@@ -345,6 +345,7 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 		{
 			return;
 		}
+		DrawMineMapDiagnostics(delveWindow);
 		foreach (DelveEntity delveEntity in DelveEntities)
 		{
 			if (!delveEntity.Path.StartsWith("Metadata/Terrain/Leagues/Delve/Objects/DelveWall") && !delveEntity.Path.StartsWith("Metadata/Terrain/Leagues/Delve/Objects/DelveLight"))
@@ -359,6 +360,137 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 					base.Graphics.DrawText(text, vector2, Color.Black, 20, (FontAlign)1);
 				}
 			}
+		}
+	}
+
+	private void DrawMineMapDiagnostics(SubterraneanChart mineMap)
+	{
+		// Debug only: shows why the mine map connections may not be drawn.
+		if (mineMap == null || !((Element)mineMap).IsVisible)
+		{
+			return;
+		}
+		List<string> lines = new List<string>
+		{
+			"[Delve] Mine map diagnostics",
+			$"Settings: ShowConnections={base.Settings.DelveMineMapConnections.Value} DrawPaths={base.Settings.DrawPaths.Value} OnlyHidden={base.Settings.OnlyShowHiddenPaths.Value} Straight={base.Settings.DrawStraightPaths.Value} Radius={base.Settings.ShowRadiusPercentage.Value}%"
+		};
+		try
+		{
+			var grid = mineMap.GridElement;
+			if (grid == null)
+			{
+				lines.Add("GridElement: null");
+			}
+			else
+			{
+				List<DelveBigCell> bigCells = grid.Cells?.ToList() ?? new List<DelveBigCell>();
+				RectangleF mapRect = ((Element)mineMap).GetClientRect();
+				System.Numerics.Vector2 mouse = Input.MousePositionNum;
+				RectangleF window = base.GameController.Window.GetWindowRectangle();
+				SharpDX.Vector2 mouseInWindow = new SharpDX.Vector2(mouse.X - window.X, mouse.Y - window.Y);
+				int cellCount = 0;
+				int withType = 0;
+				int withTypeOffset = 0;
+				int visibleFlag = 0;
+				int hiddenFlag = 0;
+				int encounterFlag = 0;
+				int withPathChildren = 0;
+				DelveCell hoveredByRect = null;
+				DelveCell hoveredByFlag = null;
+				HashSet<string> typeSamples = new HashSet<string>();
+				foreach (DelveBigCell bigCell in bigCells)
+				{
+					foreach (DelveCell cell in bigCell.Cells)
+					{
+						cellCount++;
+						if (cell.Type != "")
+						{
+							withType++;
+							if (typeSamples.Count < 5)
+							{
+								typeSamples.Add(cell.Type);
+							}
+						}
+						if (!string.IsNullOrEmpty(Extensions.Type(cell)))
+						{
+							withTypeOffset++;
+						}
+						if (cell.IsCellVisible())
+						{
+							visibleFlag++;
+						}
+						if (cell.PathIsHidden())
+						{
+							hiddenFlag++;
+						}
+						if (cell.HasEncounter())
+						{
+							encounterFlag++;
+						}
+						if (((Element)cell).Children.Any((Element x) => x != null && !x.IsVisible && ((int)x.Width == 10 || (int)x.Width == 4)))
+						{
+							withPathChildren++;
+						}
+						if (hoveredByRect == null && ((Element)cell).GetClientRect().Contains(mouseInWindow))
+						{
+							hoveredByRect = cell;
+						}
+						if (hoveredByFlag == null && cell.IsCellHovered())
+						{
+							hoveredByFlag = cell;
+						}
+					}
+				}
+				lines.Add($"Map rect: {mapRect}  Mouse: {mouse.X:F0},{mouse.Y:F0}  Window: {window.X:F0},{window.Y:F0}");
+				lines.Add($"Big cells: {bigCells.Count}  Cells: {cellCount}");
+				lines.Add($"Type != \"\" (ExileCore): {withType}  Type (offset 1624): {withTypeOffset}");
+				lines.Add($"IsCellVisible (1164): {visibleFlag}  PathIsHidden (1167): {hiddenFlag}  HasEncounter (1163): {encounterFlag}");
+				lines.Add($"Cells with path children (width 10/4, invisible): {withPathChildren}");
+				lines.Add("Type samples: " + (typeSamples.Count > 0 ? string.Join(", ", typeSamples) : "-"));
+				AddHoveredCellDiagnostics(lines, "Hovered (by rect)", hoveredByRect);
+				AddHoveredCellDiagnostics(lines, "Hovered (by flag 1704)", hoveredByFlag);
+			}
+		}
+		catch (Exception ex)
+		{
+			lines.Add("Exception: " + ex.GetType().Name + ": " + ex.Message);
+		}
+		RectangleF rect = ((Element)mineMap).GetClientRect();
+		System.Numerics.Vector2 position = new System.Numerics.Vector2(rect.X + 10f, rect.Y + 10f);
+		float width = 0f;
+		float height = 0f;
+		foreach (string line in lines)
+		{
+			System.Numerics.Vector2 size = base.Graphics.MeasureText(line);
+			width = Math.Max(width, size.X);
+			height += size.Y + 2f;
+		}
+		base.Graphics.DrawBox(new RectangleF(position.X - 5f, position.Y - 5f, width + 10f, height + 10f), new Color(0, 0, 0, 220));
+		foreach (string line in lines)
+		{
+			base.Graphics.DrawText(line, position, Color.White);
+			position.Y += base.Graphics.MeasureText(line).Y + 2f;
+		}
+	}
+
+	private static void AddHoveredCellDiagnostics(List<string> lines, string label, DelveCell cell)
+	{
+		if (cell == null)
+		{
+			lines.Add(label + ": none");
+			return;
+		}
+		try
+		{
+			lines.Add($"{label}: Type='{cell.Type}' TypeOffset='{Extensions.Type(cell)}' TypeHuman='{cell.TypeHuman()}' Biome='{cell.BiomeName()}'");
+			lines.Add($"  Visible={cell.IsCellVisible()} Hidden={cell.PathIsHidden()} Encounter={cell.HasEncounter()} Visited={cell.WasVisited()} Rect={((Element)cell).GetClientRect()}");
+			IEnumerable<string> children = ((Element)cell).Children.Where((Element x) => x != null).Take(12).Select((Element x) => $"{x.Width:F0}x{x.Height:F0}@{x.X:F0},{x.Y:F0}{(x.IsVisible ? "" : " hidden")}");
+			lines.Add("  Children: " + string.Join(" | ", children));
+		}
+		catch (Exception ex)
+		{
+			lines.Add($"  {label} exception: {ex.GetType().Name}: {ex.Message}");
 		}
 	}
 
