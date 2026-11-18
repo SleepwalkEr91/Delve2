@@ -14,7 +14,6 @@
     <OutputPath>..\..\..\Plugins\Temp\$(MSBuildProjectName)</OutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="ImGui.NET" Version="1.90.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="SharpDX.Mathematics" Version="4.2.0" />
   </ItemGroup>
@@ -25,6 +24,10 @@
     </Reference>
     <Reference Include="GameOffsets">
       <HintPath>..\..\..\GameOffsets.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Hexa.NET.ImGui">
+      <HintPath>$(exapiPackage)\Hexa.NET.ImGui.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
