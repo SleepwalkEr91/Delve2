@@ -92,8 +92,6 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 
 	public FossilTiers FossilList = new FossilTiers();
 
-	private IconStore iconStore;
-
 	private float updateCooldown = 250f;
 
 	public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
@@ -262,7 +260,6 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 		}
 		AtlasTextureInit();
 		Input.RegisterKey(base.Settings.DebugHotkey.Value);
-		iconStore = new IconStore(base.CreateAtlas(Path.Join(SourceDir, "Textures", "chart", "icons.json"), Path.Join(SourceDir, "Textures", "chart", "icons.png")), Path.Join(SourceDir, "chart_icons.json"));
 		buildDate = new DateTime(2000, 1, 1).AddDays(version.Build).AddSeconds(version.Revision * 2);
 		base.Name = "Delve";
 		PluginVersion = $"{version}";
@@ -320,10 +317,6 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 		SubMap val = ((RemoteMemoryObject)map.LargeMap).AsObject<SubMap>();
 		MapIcon._mapScale = (float)base.GameController.IngameState.Camera.Height / 677f * val.Zoom;
 		SubterraneanChart delveWindow = base.GameController.Game.IngameState.IngameUi.DelveWindow;
-		if (base.Settings.DelveMineMapConnections.Value)
-		{
-			DrawMineMapConnections(delveWindow);
-		}
 		if (base.Settings.DelveGridMap.Value)
 		{
 			DelveMapNodes(delveWindow);
@@ -590,113 +583,6 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 		DrawRadarLinesToSmallMiniMap();
 	}
 
-	private void DrawMineMapConnections(SubterraneanChart MineMap)
-	{
-		if (!((Element)MineMap).IsVisible || !base.Settings.DrawPaths.Value)
-		{
-			return;
-		}
-		int num = 0;
-		RectangleF empty = RectangleF.Empty;
-		RectangleF MineMapArea = ((Element)MineMap).GetClientRect();
-		float num2 = (float)(100 - base.Settings.ShowRadiusPercentage.Value) * MineMapArea.Width / 200f;
-		float num3 = (float)(100 - base.Settings.ShowRadiusPercentage.Value) * MineMapArea.Height / 200f;
-		MineMapArea.Inflate(0f - num2, 0f - num3);
-		foreach (DelveBigCell item in MineMap.GridElement.Cells.Where((DelveBigCell cell) => ((Element)cell).GetClientRect().Intersects(MineMapArea)))
-		{
-			foreach (DelveCell item2 in item.Cells.Where((DelveCell x) => x.Type != ""))
-			{
-				RectangleF clientRect = ((Element)item2).GetClientRect();
-				SharpDX.Vector2 center = clientRect.Center;
-				if ((!item2.PathIsHidden() && item2.IsCellVisible() && base.Settings.OnlyShowHiddenPaths.Value) || !MineMapArea.Intersects(clientRect))
-				{
-					continue;
-				}
-				Element[] array = ((Element)item2).Children.Where((Element x) => x != null && !x.IsVisible && ((int)x.Width == 10 || (int)x.Width == 4)).ToArray();
-				int num4 = 0;
-				int num5 = array.Count();
-				Color color2;
-				if (base.Settings.ColoredPaths.Value)
-				{
-					string text = item2.BiomeName();
-					if (1 == 0)
-					{
-					}
-					Color color = text switch
-					{
-						"AbyssalDepths" => Color.DarkGreen, 
-						"AbyssalCity" => Color.DarkGreen, 
-						"PetrifiedForest" => Color.SandyBrown, 
-						"MagmaFissure" => Color.DarkRed, 
-						"FungalCaverns" => Color.DarkViolet, 
-						"FrozenHollow" => Color.DarkBlue, 
-						"PrimevalRuins" => Color.Blue, 
-						"VaalOutpost" => Color.Orange, 
-						"SulphurVents" => Color.Brown, 
-						_ => Color.Yellow, 
-					};
-					if (1 == 0)
-					{
-					}
-					color2 = color;
-				}
-				else
-				{
-					color2 = Color.Yellow;
-				}
-				Color color3 = color2;
-				if (base.Settings.DrawStraightPaths.Value)
-				{
-					List<SharpDX.Vector2> list = new List<SharpDX.Vector2>();
-					if (((Element)item2).Children.Any((Element x) => x.Width == 10f && x.Y != 0f))
-					{
-						list.Add(clientRect.BottomMiddle());
-					}
-					if (((Element)item2).Children.Any((Element x) => x.Width == 10f && x.Y == 0f))
-					{
-						list.Add(clientRect.TopMiddle());
-					}
-					if (((Element)item2).Children.Any((Element x) => x.Width == 4f && x.X == 0f))
-					{
-						list.Add(clientRect.LeftMiddle());
-					}
-					if (((Element)item2).Children.Any((Element x) => x.Width == 4f && x.X != 0f))
-					{
-						list.Add(clientRect.RightMiddle());
-					}
-					foreach (SharpDX.Vector2 item3 in list)
-					{
-						base.Graphics.DrawLine(center, item3, 4f, color3);
-					}
-				}
-				else
-				{
-					Element[] array2 = array;
-					foreach (Element val in array2)
-					{
-						int num7 = 15;
-						SharpDX.Vector2 center2 = val.GetClientRect().Center;
-						if (num4 < num5)
-						{
-							base.Graphics.DrawLine(center2, center, 4f, color3);
-						}
-						num4++;
-					}
-				}
-				if (!item2.IsCellVisible() && item2.HasEncounter() && MineMapArea.Contains(center))
-				{
-					AtlasTexture byFeatureId = iconStore.GetByFeatureId(item2.Type);
-					if (byFeatureId != null)
-					{
-						RectangleF rectangleF = clientRect;
-						rectangleF.Inflate((0f - rectangleF.Width) / 7f, (0f - rectangleF.Height) / 7f);
-						base.Graphics.DrawImage(byFeatureId, rectangleF);
-					}
-				}
-			}
-		}
-	}
-
 	public void DelveMenu(int idIn, out int idPop)
 	{
 		idPop = idIn;
@@ -791,23 +677,8 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 			ImGui.Spacing();
 			ImGui.TreePop();
 		}
-		if (ImGui.TreeNode("Delve Mine Map Stuff"))
+		if (ImGui.TreeNode("Minimap Radar Lines"))
 		{
-			ImGui.PushID(idPop);
-			base.Settings.DelveMineMapConnections.Value = ImGuiExtension.Checkbox($"Show Connections###{idPop}", base.Settings.DelveMineMapConnections.Value);
-			ImGui.PopID();
-			idPop++;
-			base.Settings.ShowRadiusPercentage.Value = ImGuiExtension.IntSlider($"Radius (%)##{idPop}", base.Settings.ShowRadiusPercentage);
-			idPop++;
-			base.Settings.DrawPaths.Value = ImGuiExtension.Checkbox($"Draw Path's###{idPop}", base.Settings.DrawPaths.Value);
-			idPop++;
-			base.Settings.OnlyShowHiddenPaths.Value = ImGuiExtension.Checkbox($"Draw only Hidden Path's###{idPop}", base.Settings.OnlyShowHiddenPaths.Value);
-			idPop++;
-			base.Settings.ColoredPaths.Value = ImGuiExtension.Checkbox($"Draw Path's with Biom Color###{idPop}", base.Settings.ColoredPaths.Value);
-			idPop++;
-			base.Settings.DrawStraightPaths.Value = ImGuiExtension.Checkbox($"Draw Straight Path's###{idPop}", base.Settings.DrawStraightPaths.Value);
-			idPop++;
-			ImGui.Spacing();
 			base.Settings.MinimapRadarLines.Value = ImGuiExtension.Checkbox($"Draw Minimap Radar Lines to Chests##{idPop}", base.Settings.MinimapRadarLines.Value);
 			idPop++;
 			base.Settings.MinimapRadarLineWidth.Value = ImGuiExtension.IntSlider($"  Minimap Radar Line Width##{idPop}", base.Settings.MinimapRadarLineWidth);
