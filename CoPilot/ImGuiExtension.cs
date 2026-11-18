@@ -301,7 +301,7 @@ public class ImGuiExtension
 					selectedItem = i;
 				}
 				uniqueIdPop++;
-				ImGui.PopStyleVar();
+				ImGui.PopStyleVar(2);
 				ImGui.PopStyleColor(3);
 				ImGui.PopID();
 			}
