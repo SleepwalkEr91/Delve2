@@ -525,13 +525,19 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 		return entity.Path.StartsWith("Metadata/Chests/DelveChests/");
 	}
 
+	private bool IsWithinRadarRange(DelveEntity entity, SharpDX.Vector2 playerGridPos)
+	{
+		int maxRange = base.Settings.MinimapRadarLineMaxRange.Value;
+		return maxRange <= 0 || (entity.GridPos - playerGridPos).LengthSquared() <= (float)maxRange * maxRange;
+	}
+
 	private void DrawRadarLinesToLargeMiniMap()
 	{
 		if (!base.Settings.MinimapRadarLines.Value)
 			return;
 		foreach (DelveEntity entity in DelveEntities)
 		{
-			if (entity == null || entity.IsOpened || !IsRadarLineTarget(entity))
+			if (entity == null || entity.IsOpened || !IsRadarLineTarget(entity) || !IsWithinRadarRange(entity, LargeMapInformation.PlayerPos))
 				continue;
 			MapIcon mapIcon = GetMapIcon(entity);
 			if (mapIcon == null)
@@ -560,7 +566,7 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 		double diag = Math.Sqrt(clientRect.Width * clientRect.Width + clientRect.Height * clientRect.Height) / 2.0;
 		foreach (DelveEntity entity in DelveEntities)
 		{
-			if (entity == null || entity.IsOpened || !IsRadarLineTarget(entity))
+			if (entity == null || entity.IsOpened || !IsRadarLineTarget(entity) || !IsWithinRadarRange(entity, playerGridPos))
 				continue;
 			MapIcon mapIcon = GetMapIcon(entity);
 			if (mapIcon == null)
@@ -753,6 +759,8 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 			base.Settings.MinimapRadarLines.Value = ImGuiExtension.Checkbox($"Draw Minimap Radar Lines to Chests##{idPop}", base.Settings.MinimapRadarLines.Value);
 			idPop++;
 			base.Settings.MinimapRadarLineWidth.Value = ImGuiExtension.IntSlider($"  Minimap Radar Line Width##{idPop}", base.Settings.MinimapRadarLineWidth);
+			idPop++;
+			base.Settings.MinimapRadarLineMaxRange.Value = ImGuiExtension.IntSlider($"  Minimap Radar Line Max Range (0 = no limit)##{idPop}", base.Settings.MinimapRadarLineMaxRange);
 			idPop++;
 			ImGui.TreePop();
 		}
