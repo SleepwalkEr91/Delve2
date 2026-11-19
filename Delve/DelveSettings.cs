@@ -79,6 +79,9 @@ public class DelveSettings : ISettings
 	public ToggleNode MinimapRadarLines { get; set; } = new ToggleNode(true);
 	public RangeNode<int> MinimapRadarLineWidth { get; set; } = new RangeNode<int>(2, 1, 8);
 
+	// Max distance (grid units) for radar lines, 0 = no limit
+	public RangeNode<int> MinimapRadarLineMaxRange { get; set; } = new RangeNode<int>(250, 0, 1000);
+
 	// Direction arrows at the player pointing to nearby breakable walls
 	public ToggleNode WallArrows { get; set; } = new ToggleNode(true);
 	public RangeNode<int> WallArrowMaxRange { get; set; } = new RangeNode<int>(300, 50, 1000);
