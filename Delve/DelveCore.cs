@@ -225,21 +225,21 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 	public LargeMapData LargeMapInformation { get; set; }
 
 	private string SourceDir;
-
 	private AtlasTexturesProcessor _delveAtlas;
 
 	private string ResolveSourceDirectory()
 	{
+		// Try Source path first (ExileCore compiles from Source, but DirectoryFullName points to Temp)
 		var sourceDir = Path.Combine(base.PluginManager.SourcePluginDirectoryPath, base.DirectoryName);
 		if (Directory.Exists(Path.Combine(sourceDir, "Textures")))
-		{
 			return sourceDir;
-		}
-		if (Directory.Exists(Path.Combine(base.DirectoryFullName, "Textures")) || Directory.Exists(Path.Combine(base.DirectoryFullName, "textures")))
-		{
+		// Fallback to DirectoryFullName if textures exist there
+		if (Directory.Exists(Path.Combine(base.DirectoryFullName, "Textures")))
 			return base.DirectoryFullName;
-		}
-		return sourceDir;
+		// Last resort: search for textures folder case-insensitively
+		if (Directory.Exists(Path.Combine(base.DirectoryFullName, "textures")))
+			return base.DirectoryFullName;
+		return sourceDir; // return source anyway, error will be logged by AtlasTextureInit
 	}
 
 	private AtlasTexture GetDelveAtlasTexture(string textureName)
@@ -250,6 +250,7 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 	public override bool Initialise()
 	{
 		SourceDir = ResolveSourceDirectory();
+		// Create atlas from Source directory (not Temp)
 		var atlasJsonPath = Path.Combine(SourceDir, "Textures", "DelveAtlas.json");
 		var atlasPngPath = Path.Combine(SourceDir, "Textures", "DelveAtlas.png");
 		if (File.Exists(atlasJsonPath) && File.Exists(atlasPngPath))
@@ -267,6 +268,13 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 		base.Name = "Delve";
 		PluginVersion = $"{version}";
 		DelveEntities = new List<DelveEntity>();
+		try
+		{
+			base.GameController.SleepingEntityListWrapper.StartWork();
+		}
+		catch
+		{
+		}
 		base.GameController.Area.OnAreaChange += ((BaseSettingsPlugin<DelveSettings>)this).AreaChange;
 		if (File.Exists(SourceDir + "\\Fossil_Tiers.json"))
 		{
@@ -552,9 +560,7 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 	private void RenderMapImages()
 	{
 		if (base.GameController?.Player == null)
-		{
 			return;
-		}
 
 		if (base.GameController.Game.IngameState.IngameUi.Map.LargeMap.IsVisible)
 		{
@@ -848,7 +854,7 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 		ImGui.BulletText(base.Name + ": v" + PluginVersion);
 		ImGui.BulletText($"Last Updated: {buildDate}");
 		idPop = 1;
-		ImGuiTreeNodeFlags val = (ImGuiTreeNodeFlags)26;
+		ImGuiTreeNodeFlags val = (ImGuiTreeNodeFlags)18; // Framed | NoAutoOpenOnLog; NoTreePushOnOpen removed: TreePop() below needs the pushed ID
 		ImGui.PushID(1000);
 		if (ImGui.TreeNodeEx("Settings", val))
 		{
@@ -857,6 +863,7 @@ public class DelveCore : BaseSettingsPlugin<DelveSettings>
 			ImGui.TreePop();
 		}
 		ImGui.PopID();
+
 	}
 
 	public void AtlasTextureInit()
