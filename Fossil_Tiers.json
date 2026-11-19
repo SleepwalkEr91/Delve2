@@ -1,5 +1,5 @@
 {
-  "T1": [ "Hollow", "Fractured", "Faceted", "Glyphic", "Sanctified", "Shuddering", "Corroded" ],
-  "T2": [ "Dense", "Deft", "Aetheric", "Pristine", "Bloodstained", "Bound", "Jagged", "Metallic", "Fundamental" ],
-  "T3": [ "Gilded", "Serrated", "Abberant", "Frigid", "Scorched", "Prismatic", "Tangled", "Lucent", "Opulent" ]
+  "T1": [ "Hollow", "Fractured", "Faceted" ],
+  "T2": [ "Shuddering", "Glyphic", "Sanctified", "Corroded", "Dense" ],
+  "T3": [ "Jagged", "Bound", "Pristine", "Serrated", "Metallic", "Aberrant", "Abberant", "Aetheric", "Prismatic", "Fundamental", "Scorched", "Frigid", "Lucent", "Deft", "Opulent", "Bloodstained", "Gilded", "Tangled" ]
 }

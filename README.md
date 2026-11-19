@@ -4,9 +4,19 @@ An ExileCore plugin for Path of Exile that enhances Delve exploration by showing
 
 ---
 
+## Quick Install (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/Matejko-poe/Delve2/main/install.ps1 | iex
+```
+
+The script will ask for your ExileCore `Plugins/` folder path, then download and install everything automatically.
+
+---
+
 ## Features
 
-### 🗺️ Minimap Icons
+### Minimap Icons
 Displays icons on the minimap for every Delve chest type, including:
 - **Currency** — orbs etc
 - **Fossils** — tiered by value (T1 / T2 / T3) with distinct icons
@@ -16,46 +26,33 @@ Displays icons on the minimap for every Delve chest type, including:
 - **Pathway chests** — generic loot along the path
 - **Strongboxes, Maps, Gems, Unique items** and many more
 
-### 📡 Radar Lines
-When a chest is outside the visible minimap area, a directional line is drawn from the center of the minimap pointing toward it — so you never miss a chest off-screen.
+### Radar Lines
+When a chest is outside the visible minimap area, a directional line is drawn from the center of the minimap pointing toward it.
 
-### 🎛️ Per-Type Filtering
-Each chest category can be individually shown or hidden:
+### Per-Type Filtering
+Each chest category can be individually shown or hidden via the settings panel.
 
-| Toggle | Description |
-|---|---|
-| **Delve Chests** | Master on/off for all chests |
-| **Currency Chest** | Currency and coin chests |
-| **Fossil Chest** | Fossil chests (all tiers) |
-| **Azurite Chest** | Azurite vein chests |
-| **Resonator Chest** | Resonator chests |
-| **Dynamite Chest** | Mining dynamite supplies |
-| **Flares Chest** | Mining flare supplies |
-| **Pathway Chest** | Chests along the path (green line) |
-| **Minimap Radar Lines** | Directional lines to off-screen chests |
-
-> All toggles work independently — you can filter the minimap to show only what matters to you (e.g. fossils and resonators only).
-
-### 🏆 Fossil Tier Icons
-Fossils are automatically sorted into three tiers based on value, each with a distinct icon:
-- **T1** — Hollow, Fractured, Faceted, Glyphic, Sanctified, Shuddering, Corroded
-- **T2** — Dense, Deft, Aetheric, Pristine, Bloodstained, Bound, Jagged, Metallic, Fundamental
-- **T3** — Gilded, Serrated, Aberrant, Frigid, Scorched, Prismatic, Tangled, Lucent, Opulent
+### Fossil Tier Icons
+Fossils are sorted into three tiers based on value:
+- **T1** — Hollow, Fractured, Faceted
+- **T2** — Shuddering, Glyphic, Sanctified, Corroded, Dense
+- **T3** — Jagged, Bound, Pristine, Serrated, Metallic, Aberrant, Aetheric, Prismatic, Fundamental, Scorched, Frigid, Lucent, Deft, Opulent, Bloodstained, Gilded, Tangled
 
 ---
 
-## Installation
+## Manual Install
 
-1. Download the latest release
-2. Copy the `Delve` folder into your ExileCore `Plugins/` directory
+1. Download the latest release zip from [Releases](https://github.com/Matejko-poe/Delve2/releases/latest)
+2. Extract the `Delve/` folder into your ExileCore `Plugins/` directory
 3. Restart ExileCore
 
-**Required files inside the folder:**
+Required structure after install:
 ```
-Delve/
-├── Delve.dll
-├── Fossil_Tiers.json
-└── Textures/
+Plugins/
+└── Delve/
+    ├── Delve.dll
+    ├── Fossil_Tiers.json
+    └── Textures/
 ```
 
 ---

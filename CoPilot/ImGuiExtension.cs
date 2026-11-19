@@ -258,21 +258,21 @@ public class ImGuiExtension
 
 	public static string InputText(string label, string currentValue, uint maxLength, ImGuiInputTextFlags flags)
 	{
-		string value = currentValue ?? string.Empty;
-		ImGui.InputText(label, ref value, maxLength, flags);
-		return value;
+		string val = currentValue ?? string.Empty;
+		ImGui.InputText(label, ref val, (nuint)maxLength, flags);
+		return val;
 	}
 
 	public static System.Numerics.Vector4 ImColor_HSV(float h, float s, float v)
 	{
-		float x = 0f, y = 0f, z = 0f;
+		float x = 0, y = 0, z = 0;
 		ImGui.ColorConvertHSVtoRGB(h, s, v, ref x, ref y, ref z);
 		return new System.Numerics.Vector4(x, y, z, 255f);
 	}
 
 	public static System.Numerics.Vector4 ImColor_HSV(float h, float s, float v, float a)
 	{
-		float x = 0f, y = 0f, z = 0f;
+		float x = 0, y = 0, z = 0;
 		ImGui.ColorConvertHSVtoRGB(h, s, v, ref x, ref y, ref z);
 		return new System.Numerics.Vector4(x, y, z, a);
 	}
